@@ -1,29 +1,31 @@
-from app.db.collections import users_collection
-from app.schemas.user import UserCreate, UserUpdate
+from datetime import datetime, timezone
+
 from bson import ObjectId
-from app.db.collections import conversations_collection
+
+from app.db.collections import (
+    users_collection,
+    conversations_collection,
+    messages_collection,
+    food_logs_collection,
+    weight_records_collection,
+    meal_plans_collection,
+)
+
+from app.schemas.user import UserCreate, UserUpdate
 from app.schemas.conversation import ConversationCreate
-from app.db.collections import messages_collection
 from app.schemas.message import MessageCreate
-from app.db.collections import food_logs_collection
 from app.schemas.food_log import FoodLogCreate
-from app.db.collections import weight_records_collection
 from app.schemas.weight_record import WeightRecordCreate
-from app.db.collections import meal_plans_collection
 from app.schemas.meal_plan import MealPlanCreate
 
+
 async def create_user(user_data: UserCreate):
-    user_document = user_data.model_dump()
-
-    result = await users_collection.insert_one(user_document)
-
+    result = await users_collection.insert_one(user_data.model_dump())
     return str(result.inserted_id)
 
 
 async def get_user_by_id(user_id: str):
-    user = await users_collection.find_one(
-        {"_id": ObjectId(user_id)}
-    )
+    user = await users_collection.find_one({"_id": ObjectId(user_id)})
 
     if user:
         user["_id"] = str(user["_id"])
@@ -45,22 +47,15 @@ async def update_user(user_id: str, user_data: UserUpdate):
     return result.matched_count > 0
 
 
-
 async def delete_user(user_id: str):
-    result = await users_collection.delete_one(
-        {"_id": ObjectId(user_id)}
-    )
-
+    result = await users_collection.delete_one({"_id": ObjectId(user_id)})
     return result.deleted_count > 0
 
 
 async def create_conversation(conversation_data: ConversationCreate):
-    conversation_document = conversation_data.model_dump()
-
     result = await conversations_collection.insert_one(
-        conversation_document
+        conversation_data.model_dump()
     )
-
     return str(result.inserted_id)
 
 
@@ -75,11 +70,29 @@ async def get_conversation_by_id(conversation_id: str):
     return conversation
 
 
+async def get_user_conversations(user_id: str):
+    cursor = conversations_collection.find(
+        {"user_id": user_id}
+    ).sort("updated_at", -1)
+
+    conversations = await cursor.to_list(length=100)
+
+    for conversation in conversations:
+        conversation["_id"] = str(conversation["_id"])
+
+    return conversations
+
+async def update_conversation_timestamp(conversation_id: str):
+    await conversations_collection.update_one(
+        {"_id": ObjectId(conversation_id)},
+        {"$set": {"updated_at": datetime.now(timezone.utc)}}
+    )
+
+
 async def create_message(message_data: MessageCreate):
-    message_document = message_data.model_dump()
-
-    result = await messages_collection.insert_one(message_document)
-
+    result = await messages_collection.insert_one(
+        message_data.model_dump()
+    )
     return str(result.inserted_id)
 
 
@@ -97,11 +110,11 @@ async def get_conversation_messages(conversation_id: str):
 
 
 async def create_food_log(food_data: FoodLogCreate):
-    food_document = food_data.model_dump()
-
-    result = await food_logs_collection.insert_one(food_document)
-
+    result = await food_logs_collection.insert_one(
+        food_data.model_dump()
+    )
     return str(result.inserted_id)
+
 
 async def get_user_food_logs(user_id: str):
     cursor = food_logs_collection.find(
@@ -117,10 +130,9 @@ async def get_user_food_logs(user_id: str):
 
 
 async def create_weight_record(weight_data: WeightRecordCreate):
-    weight_document = weight_data.model_dump()
-
-    result = await weight_records_collection.insert_one(weight_document)
-
+    result = await weight_records_collection.insert_one(
+        weight_data.model_dump()
+    )
     return str(result.inserted_id)
 
 
@@ -138,12 +150,9 @@ async def get_user_weight_history(user_id: str):
 
 
 async def create_meal_plan(meal_plan_data: MealPlanCreate):
-    meal_plan_document = meal_plan_data.model_dump()
-
     result = await meal_plans_collection.insert_one(
-        meal_plan_document
+        meal_plan_data.model_dump()
     )
-
     return str(result.inserted_id)
 
 

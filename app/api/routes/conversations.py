@@ -3,6 +3,7 @@ from app.schemas.conversation import ConversationCreate
 from app.db.operations import (
     create_conversation,
     get_conversation_by_id,
+    get_user_conversations,
 )
 
 
@@ -19,6 +20,16 @@ async def start_conversation(conversation_data: ConversationCreate):
     return {
         "message": "Conversation created successfully",
         "conversation_id": conversation_id
+    }
+
+
+@router.get("/user/{user_id}")
+async def list_user_conversations(user_id: str):
+    conversations = await get_user_conversations(user_id)
+
+    return {
+        "user_id": user_id,
+        "conversations": conversations
     }
 
 

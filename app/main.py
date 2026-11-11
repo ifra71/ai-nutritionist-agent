@@ -7,6 +7,10 @@ from app.db.database import (
 from app.api.routes.conversations import router as conversations_router
 from app.api.routes.users import router as users_router
 from app.api.routes.messages import router as messages_router
+from app.api.routes.food_logs import router as food_logs_router
+from app.api.routes.weight_records import router as weight_router
+from app.api.routes.meal_plans import router as meal_plans_router
+from app.api.routes.agent import router as agent_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -28,6 +32,10 @@ app = FastAPI(
 app.include_router(users_router)
 app.include_router(conversations_router)
 app.include_router(messages_router)
+app.include_router(food_logs_router)
+app.include_router(weight_router)
+app.include_router(meal_plans_router)
+app.include_router(agent_router)
 
 @app.get("/")
 async def root():
